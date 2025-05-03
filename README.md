@@ -4,7 +4,11 @@
 Extract your code changes as stunning animated transitions.
 </p>
 
+<div align="center">
+  
 ![code-steps-1746282490393](https://github.com/user-attachments/assets/55a55afd-4311-4dcb-81a3-3b6d2d091225)
+
+</div>
 
 ## Introduction
 
