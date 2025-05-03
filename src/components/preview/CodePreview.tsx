@@ -23,7 +23,6 @@ import { CodeBlock } from './CodeBlock';
 import { CODE_CONTAINER_PADDING_BLOCK, CODE_CONTAINER_PADDING_INLINE } from '../../lib/constants';
 import { Theme } from '@code-hike/lighter';
 import { getOptimalCanvasSize } from '../../lib/utils';
-import { Loader2 } from 'lucide-react';
 
 const MARK_BACKGROUND_COLOR = '#F2CC6044';
 const MARK_DURATION = 10;
@@ -36,18 +35,19 @@ export interface CodePreviewsProps {
   fontFamily?: string;
   fontSize?: number;
   highlightedSteps?: HighlightedCode[];
+  scheme?: 'light' | 'dark';
 }
 
 export const CodePreview = memo(function CodePreview({
   steps,
   durationInFrames,
+  scheme = 'light',
   theme = 'dark-plus',
   language = 'typescript',
   fontFamily = 'monospace',
   fontSize = 16,
   highlightedSteps = [],
 }: CodePreviewsProps) {
-  console.log('highlightedSteps', highlightedSteps);
   const [ready, setReady] = useState(highlightedSteps.length > 0);
   const [codes, setCodes] = useState<HighlightedCode[]>(highlightedSteps);
   const [maxBoxSize, setMaxBoxSize] = useState({ width: 800, height: 450 });
@@ -87,7 +87,7 @@ export const CodePreview = memo(function CodePreview({
   if (!ready) {
     return (
       <Sequence durationInFrames={sequenceDurationInFrames} layout="none">
-        <CodeBlock width={maxBoxSize.width} height={maxBoxSize.height} theme={theme}>
+        <CodeBlock scheme={scheme} width={maxBoxSize.width} height={maxBoxSize.height} theme={theme}>
           {null}
         </CodeBlock>
       </Sequence>
@@ -108,7 +108,7 @@ export const CodePreview = memo(function CodePreview({
           overflow: 'hidden',
         }}
       >
-        <CodeBlock width={maxBoxSize.width} height={maxBoxSize.height} theme={theme}>
+        <CodeBlock scheme={scheme} width={maxBoxSize.width} height={maxBoxSize.height} theme={theme}>
           <Code
             oldCode={i === 0 ? undefined : codes[i - 1]}
             newCode={code}

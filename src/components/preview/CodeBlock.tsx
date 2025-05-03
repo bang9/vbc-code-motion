@@ -5,18 +5,16 @@ import {
   CODE_CONTAINER_PADDING_BLOCK,
   CODE_CONTAINER_PADDING_INLINE,
 } from '../../lib/constants';
-import { cn } from '../../lib/utils';
-import { useTheme } from 'next-themes';
 interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
-  width?: number | string;
-  height?: number | string;
+  width?: number;
+  height?: number;
   theme?: Theme;
   children: React.ReactNode;
+  scheme?: 'light' | 'dark';
 }
 
-export function CodeBlock({ width, height, style, theme, children, ...rest }: CodeBlockProps) {
-  const { theme: currentTheme } = useTheme();
-  const darkMode = currentTheme === 'dark';
+export function CodeBlock({ scheme, width, height, style, theme, children, ...rest }: CodeBlockProps) {
+  const darkMode = scheme === 'dark';
   let backgroundStyle = {};
   if (theme === 'github-from-css') {
     backgroundStyle = { background: 'var(--ch-code-bg, #fff)' };

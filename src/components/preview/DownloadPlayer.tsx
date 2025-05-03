@@ -1,8 +1,8 @@
 import { Composition, registerRoot, getInputProps } from 'remotion';
 import { CodePreview } from './CodePreview';
-import { RemotionConfig } from '../../stores/remotion-config';
+import { GenerateVideoConfig } from '../../lib/utils';
 
-const DEFAULTS: RemotionConfig = {
+const DEFAULTS: GenerateVideoConfig = {
   fps: 60,
   width: 1280,
   height: 720,
@@ -12,11 +12,13 @@ const DEFAULTS: RemotionConfig = {
   fontSize: 16,
   currentStep: 0,
   totalDurationSec: 2,
+  steps: [],
+  scheme: 'light',
 };
 
 registerRoot(() => {
-  const inputProps = { ...DEFAULTS, ...getInputProps() } as RemotionConfig & { steps: string[] };
-  const { steps = [], totalDurationSec, fps, width, height, theme, language, fontFamily, fontSize } = inputProps;
+  const inputProps = { ...DEFAULTS, ...getInputProps() } as GenerateVideoConfig;
+  const { steps, scheme, totalDurationSec, fps, width, height, theme, language, fontFamily, fontSize } = inputProps;
 
   return (
     <Composition
@@ -34,6 +36,7 @@ registerRoot(() => {
         fontSize,
         fps,
         durationInFrames: Math.round(fps * totalDurationSec),
+        scheme,
       }}
     />
   );

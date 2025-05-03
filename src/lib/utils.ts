@@ -7,8 +7,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface GenerateVideoConfig extends RemotionConfig {
+export interface GenerateVideoConfig extends RemotionConfig {
   steps: string[];
+  scheme: 'light' | 'dark';
 }
 
 export function requestGenerateVideo(config: GenerateVideoConfig, format?: 'video' | 'gif' | 'webm') {

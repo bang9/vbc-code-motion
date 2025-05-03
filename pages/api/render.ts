@@ -22,7 +22,8 @@ const RenderSchema = z.object({
   currentStep: z.coerce.number().int().optional(),
   format: z.enum(['video', 'gif', 'webm']).optional(),
   totalDurationSec: z.coerce.number(),
-  scale: z.coerce.number().optional().default(2),
+  scale: z.coerce.number().optional(),
+  scheme: z.enum(['light', 'dark']).optional().default('light'),
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -45,7 +46,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fontSize,
       format = 'video',
       totalDurationSec,
-      scale,
+      scale = format === 'gif' ? 1 : 2,
+      scheme,
     } = parseResult.data;
 
     const highlightedSteps: HighlightedCode[] = await Promise.all(
@@ -53,7 +55,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const compositionConfigs = { fps, width, height };
-    const codeConfigs = { fps, steps, highlightedSteps, theme, language, fontFamily, fontSize, totalDurationSec };
+    const codeConfigs = {
+      fps,
+      steps,
+      highlightedSteps,
+      theme,
+      language,
+      fontFamily,
+      fontSize,
+      totalDurationSec,
+      scheme,
+    };
 
     if (format === 'gif') {
       const limitedFps = Math.max(Math.min(fps, 50), 30);

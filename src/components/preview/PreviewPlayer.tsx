@@ -143,6 +143,7 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
             fontSize: config.fontSize,
             durationInFrames: Math.round(config.fps * totalDurationSec),
             fps: config.fps,
+            scheme: darkMode ? ('dark' as const) : ('light' as const),
           }}
           renderPoster={() => null}
           showPosterWhenUnplayed

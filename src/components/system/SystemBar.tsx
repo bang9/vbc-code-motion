@@ -8,15 +8,24 @@ import { requestGenerateVideo } from '@/lib/utils';
 import { Loader2, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { FORMAT_OPTIONS } from '@/lib/constants';
+import { useTheme } from 'next-themes';
 
 export const SystemBar = () => {
   const { config } = useRemotionConfig();
-
+  const theme = useTheme().theme;
   const [isGenerating, setIsGenerating] = useState(false);
   const [format, setFormat] = useState<'video' | 'gif' | 'webm'>('video');
   const [hovered, setHovered] = useState(false);
+
   const handleGenerate = useCallback(async () => {
+    const darkMode = theme === 'dark';
     const steps = useStepsStore.getState().steps;
+    const extension = (() => {
+      if (format === 'gif') return 'gif';
+      if (format === 'webm') return 'webm';
+      return 'mp4';
+    })();
+
     if (steps.length === 0) {
       alert('최소 한 개 이상의 스텝이 필요합니다.');
       return;
@@ -24,19 +33,19 @@ export const SystemBar = () => {
 
     setIsGenerating(true);
     try {
-      const res = await requestGenerateVideo({ ...config, steps }, format);
+      const res = await requestGenerateVideo({ ...config, steps, scheme: darkMode ? 'dark' : 'light' }, format);
       if (!res.ok) throw new Error('Render failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `code-steps-${Date.now()}.${format === 'gif' ? 'gif' : format === 'webm' ? 'webm' : 'mp4'}`;
+      a.download = `code-steps-${Date.now()}.${extension}`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {
       setIsGenerating(false);
     }
-  }, [config, format]);
+  }, [config, format, theme]);
 
   return (
     <div className="flex items-center gap-2 ml-auto">
