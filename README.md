@@ -7,7 +7,10 @@
 ![Screenshot](./resources/screenshot.png)
 *Example: Visualizing code changes and transitions in Code Motion*
 
-![Result Video](./resources/result.mp4)
+
+
+https://github.com/user-attachments/assets/f57183b7-42f6-411d-a875-3efd121d7a7b
+
 *Example: Exported code transition as a video (MP4)*
 
 ## Key Features
