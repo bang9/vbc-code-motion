@@ -4,7 +4,7 @@
 Extract your code changes as stunning animated transitions.
 </p>
 
-![preview](https://github.com/user-attachments/assets/9f244c47-dc8a-490b-a8da-9b7da44777a7)
+![code-steps-1746282490393](https://github.com/user-attachments/assets/55a55afd-4311-4dcb-81a3-3b6d2d091225)
 
 ## Introduction
 
