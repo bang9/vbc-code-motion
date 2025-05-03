@@ -2,7 +2,9 @@ import { create } from 'zustand';
 
 interface StepsState {
   steps: string[];
+  currentStep: number;
   setSteps: (steps: string[]) => void;
+  setCurrentStep: (step: number) => void;
   updateStep: (idx: number, code: string) => void;
   addStep: () => void;
   removeStep: (idx: number) => void;
@@ -13,7 +15,9 @@ export const useStepsStore = create<StepsState>((set) => ({
     "function greeting() {\n  console.log('Hello');\n}",
     "function greeting() {\n  console.log('Hello, world!');\n}",
   ],
+  currentStep: 0,
   setSteps: (steps) => set({ steps }),
+  setCurrentStep: (step) => set({ currentStep: step }),
   updateStep: (idx, code) =>
     set((state) => {
       const newSteps = [...state.steps];

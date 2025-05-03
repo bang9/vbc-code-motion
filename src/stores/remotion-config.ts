@@ -1,10 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Theme } from '@code-hike/lighter';
-import { shallow } from 'zustand/shallow';
 
 export interface RemotionConfig {
-  steps: string[];
   fps: number;
   width: number;
   height: number;
@@ -13,18 +11,15 @@ export interface RemotionConfig {
   fontFamily: string;
   fontSize: number;
   currentStep: number;
+  totalDurationSec: number;
 }
 
 interface RemotionConfigState {
   config: RemotionConfig;
   setConfig: (config: Partial<RemotionConfig>) => void;
-  setSteps: (steps: string[]) => void;
-  setCurrentStep: (step: number) => void;
 }
 
 const DEFAULT_CONFIG: RemotionConfig = {
-  steps: [],
-  fps: 30,
   width: 1280,
   height: 720,
   theme: 'dark-plus' as Theme,
@@ -32,6 +27,8 @@ const DEFAULT_CONFIG: RemotionConfig = {
   fontFamily: "'JetBrains Mono', monospace, 'Fira Code', 'Source Code Pro', 'IBM Plex Mono', 'Menlo', 'Consolas'",
   fontSize: 16,
   currentStep: 0,
+  fps: 60,
+  totalDurationSec: 2,
 };
 
 const toEven = (n: number | undefined) => (typeof n === 'number' ? (n % 2 === 0 ? n : n - 1) : undefined);
@@ -54,14 +51,6 @@ const useRemotionConfigBase = create(
             },
           };
         }),
-      setSteps: (steps) =>
-        set((state) => ({
-          config: { ...state.config, steps },
-        })),
-      setCurrentStep: (step) =>
-        set((state) => ({
-          config: { ...state.config, currentStep: step },
-        })),
     }),
     {
       name: 'remotion-config',

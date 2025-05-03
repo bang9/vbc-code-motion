@@ -13,11 +13,9 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false 
 
 export const CodeEditor = memo(function CodeEditor() {
   const { theme } = useTheme();
-  const steps = useStepsStore((state) => state.steps);
-  const updateStep = useStepsStore((state) => state.updateStep);
-  const addStep = useStepsStore((state) => state.addStep);
-  const removeStep = useStepsStore((state) => state.removeStep);
-  const [currentStep, setCurrentStep] = useState(0);
+
+  const { steps, currentStep, setCurrentStep, updateStep, addStep, removeStep } = useStepsStore();
+
   const [localCode, setLocalCode] = useState(steps[currentStep] || '');
   const [_, startTransition] = useTransition();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -51,13 +49,16 @@ export const CodeEditor = memo(function CodeEditor() {
 
   function handleRemoveStep(idx: number) {
     removeStep(idx);
-    setCurrentStep((prev) => {
-      const newLength = steps.length - 1;
-      if (newLength <= 0) return 0;
-      if (prev > idx) return prev - 1;
-      if (prev === idx) return Math.max(0, prev - 1);
-      return prev;
-    });
+
+    if (currentStep === idx) {
+      setCurrentStep(currentStep - 1);
+    } else if (currentStep > idx) {
+      setCurrentStep(currentStep - 1);
+    } else if (currentStep < idx) {
+      setCurrentStep(currentStep);
+    } else {
+      setCurrentStep(0);
+    }
   }
 
   const darkMode = theme === 'dark';

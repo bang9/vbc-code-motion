@@ -50,22 +50,6 @@ export const ToolBar = memo(function EditorToolbar() {
             </SelectContent>
           </Select>
         </div>
-        {/* <div className="flex flex-col">
-          <Label className="mb-1 text-xs text-gray-500 font-semibold">Font</Label>
-          <Select onValueChange={(v) => handleSettingChange('fontFamily', v)} value={config.fontFamily}>
-            <SelectTrigger className="w-full h-10 rounded-md border border-gray-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/30">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FONTS.map((font) => (
-                <SelectItem key={font.value} value={font.value}>
-                  {font.label}
-                  {font.recommended && <span className="ml-1 text-xs text-blue-500">추천</span>}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div> */}
         <div className="flex flex-col">
           <Label className="mb-1 text-xs text-gray-500 dark:text-gray-300 font-semibold">Size</Label>
           <Select onValueChange={(v) => handleSettingChange('fontSize', Number(v))} value={config.fontSize.toString()}>
@@ -76,7 +60,6 @@ export const ToolBar = memo(function EditorToolbar() {
               {FONT_SIZES.map((size) => (
                 <SelectItem key={size.value} value={size.value.toString()}>
                   {size.label}
-                  {size.recommended && <span className="ml-1 text-xs text-blue-500">추천</span>}
                 </SelectItem>
               ))}
             </SelectContent>

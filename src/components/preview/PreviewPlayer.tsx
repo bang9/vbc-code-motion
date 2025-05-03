@@ -10,19 +10,20 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { CODE_CONTAINER_PADDING_INLINE, CODE_CONTAINER_PADDING_BLOCK } from '@/lib/constants';
-import { getOptimalCanvasSize } from '@/lib/utils';
+import { cn, getOptimalCanvasSize } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 export const PreviewPlayer = memo(function PreviewPlayer() {
   const playerRef = useRef<PlayerRef>(null);
   const { config, setConfig } = useRemotionConfig();
   const [_, startTransition] = useTransition();
-  const steps = useStepsStore((s) => s.steps);
+  const { steps, currentStep, setCurrentStep } = useStepsStore();
   const deferredSteps = useDeferredValue(steps);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 450 });
+  const darkMode = useTheme().theme === 'dark';
+  const totalDurationSec = config.totalDurationSec;
 
-  // 클라이언트에서만 동적으로 width/height 계산
   useEffect(() => {
     if (steps && steps.length > 0) {
       startTransition(() => {
@@ -46,7 +47,6 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
     }
   }, [currentStep, steps?.[currentStep], config.fontSize, config.fontFamily]);
 
-  // width/height가 바뀔 때 store에도 항상 반영
   useEffect(() => {
     if (config.width !== canvasSize.width || config.height !== canvasSize.height) {
       setConfig({ width: canvasSize.width, height: canvasSize.height });
@@ -60,39 +60,52 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
       } else {
         playerRef.current.play();
       }
-      setIsPlaying((prev) => !prev);
     }
   }, [isPlaying]);
 
+  const seekToStep = (step: number) => {
+    if (playerRef.current) {
+      const seceneStartFrame = Math.round(step * ((config.fps * totalDurationSec) / steps.length));
+      playerRef.current.seekTo(seceneStartFrame);
+    }
+  };
+
   const handlePrevStep = () => {
-    setCurrentStep((prev) => {
-      if (prev > 0) {
-        if (playerRef.current) {
-          playerRef.current.seekTo(Math.max(0, (prev - 1) * 60));
-        }
-        return prev - 1;
-      }
-      return prev;
-    });
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
   const handleNextStep = () => {
-    setCurrentStep((prev) => {
-      if (prev < (steps?.length ?? 0) - 1) {
-        if (playerRef.current) {
-          playerRef.current.seekTo((prev + 1) * 60);
-        }
-        return prev + 1;
-      }
-      return prev;
-    });
+    if (currentStep < (steps?.length ?? 0) - 1) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   useEffect(() => {
-    return () => {
+    seekToStep(currentStep);
+  }, [currentStep, config.fps, totalDurationSec]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    const onPlay = () => {
+      setIsPlaying(true);
+    };
+    const onEnded = () => {
       setIsPlaying(false);
     };
-  }, []);
+    player.addEventListener('play', onPlay);
+    player.addEventListener('resume', onPlay);
+    player.addEventListener('pause', onEnded);
+    player.addEventListener('ended', onEnded);
+    return () => {
+      player.removeEventListener('play', onPlay);
+      player.removeEventListener('resume', onPlay);
+      player.removeEventListener('pause', onEnded);
+      player.removeEventListener('ended', onEnded);
+    };
+  }, [playerRef.current]);
 
   if (!steps?.length) {
     return (
@@ -103,7 +116,7 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center gap-2">
       <div
         className="relative bg-background rounded-md shadow-md overflow-hidden"
         style={{
@@ -115,7 +128,7 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
           acknowledgeRemotionLicense
           ref={playerRef}
           component={CodePreview}
-          durationInFrames={steps.length * 60}
+          durationInFrames={Math.round(config.fps * totalDurationSec)}
           fps={config.fps}
           compositionWidth={canvasSize.width}
           compositionHeight={canvasSize.height}
@@ -125,7 +138,7 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
             borderRadius: 12,
             overflow: 'hidden',
           }}
-          loop
+          loop={false}
           autoPlay={false}
           inputProps={{
             steps: deferredSteps,
@@ -133,34 +146,68 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
             language: config.language,
             fontFamily: config.fontFamily,
             fontSize: config.fontSize,
+            durationInFrames: Math.round(config.fps * totalDurationSec),
+            fps: config.fps,
           }}
+          renderPoster={() => null}
+          showPosterWhenUnplayed
         />
       </div>
 
-      <div className="flex items-center gap-2 mt-4 w-full max-w-md">
-        <Button variant="outline" size="icon" onClick={handlePrevStep} disabled={currentStep === 0}>
-          <SkipBack className="h-4 w-4" />
-        </Button>
+      <div
+        className={cn(
+          'w-full max-w-md mt-4 bg-card border border-border rounded-xl px-6 py-1 flex flex-col items-center justify-between',
+          darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700',
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="w-8 h-8" onClick={handlePrevStep} disabled={currentStep === 0}>
+            <SkipBack className="h-2 w-2" />
+          </Button>
 
-        <Button variant="outline" size="icon" onClick={handlePlayPause}>
-          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-        </Button>
+          <Button variant="outline" className="w-8 h-8" onClick={handlePlayPause}>
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
 
-        <Button variant="outline" size="icon" onClick={handleNextStep} disabled={currentStep === steps.length - 1}>
-          <SkipForward className="h-4 w-4" />
-        </Button>
-
-        <div className="ml-4 flex items-center gap-2 flex-1">
+          <Button
+            variant="outline"
+            className="w-8 h-8"
+            onClick={handleNextStep}
+            disabled={currentStep === steps.length - 1}
+          >
+            <SkipForward className="w-2 h-2" />
+          </Button>
+        </div>
+      </div>
+      <div
+        className={cn(
+          'w-full max-w-md bg-card border border rounded-xl px-4 py-2 flex gap-2 flex-col',
+          darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700',
+        )}
+      >
+        <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">FPS:</span>
           <Slider
             value={[config.fps]}
-            min={1}
+            min={30}
             max={60}
-            step={1}
+            step={5}
             onValueChange={(value) => setConfig({ fps: value[0] })}
-            className="w-32"
+            className="w-24"
           />
-          <span className="text-sm">{config.fps}</span>
+          <span className="text-sm text-foreground">{config.fps}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Duration:</span>
+          <Slider
+            value={[totalDurationSec]}
+            min={steps.length * 0.5}
+            max={steps.length * 2}
+            step={0.5}
+            onValueChange={([v]) => setConfig({ totalDurationSec: v })}
+            className="w-24"
+          />
+          <span className="text-sm text-foreground">{totalDurationSec.toFixed(2)}s</span>
         </div>
       </div>
     </div>

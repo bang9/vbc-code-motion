@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, memo } from 'react';
+import React, { useEffect, useState, memo, useLayoutEffect } from 'react';
 import {
   AbsoluteFill,
   continueRender,
@@ -23,40 +23,33 @@ import { CodeBlock } from './CodeBlock';
 import { CODE_CONTAINER_PADDING_BLOCK, CODE_CONTAINER_PADDING_INLINE } from '../../lib/constants';
 import { Theme } from '@code-hike/lighter';
 import { getOptimalCanvasSize } from '../../lib/utils';
+import { Loader2 } from 'lucide-react';
 
-export interface CodeStepsProps {
+const MARK_BACKGROUND_COLOR = '#F2CC6044';
+const MARK_DURATION = 10;
+
+export interface CodePreviewsProps {
   steps: string[];
+  durationInFrames: number;
   theme?: Theme;
   language?: string;
   fontFamily?: string;
   fontSize?: number;
 }
 
-interface CodeProps {
-  oldCode: HighlightedCode | undefined;
-  newCode: HighlightedCode;
-  boxSize?: { width: number; height: number };
-  theme: Theme;
-  fontFamily: string;
-  fontSize: number;
-}
-
-const STEP_FRAMES = 60;
-const MARK_BACKGROUND_COLOR = '#F2CC6044';
-const MARK_DURATION = 10;
-
 export const CodePreview = memo(function CodePreview({
   steps,
+  durationInFrames,
   theme = 'dark-plus',
   language = 'typescript',
   fontFamily = 'monospace',
   fontSize = 16,
-}: CodeStepsProps) {
+}: CodePreviewsProps) {
   const [ready, setReady] = useState(false);
   const [codes, setCodes] = useState<HighlightedCode[]>([]);
   const [maxBoxSize, setMaxBoxSize] = useState({ width: 800, height: 450 });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const highlightSteps = async () => {
       const highlighted = await Promise.all(steps.map((v) => highlight({ lang: language, value: v, meta: '' }, theme)));
       setCodes(highlighted);
@@ -83,62 +76,69 @@ export const CodePreview = memo(function CodePreview({
     highlightSteps();
   }, [steps, language, fontSize, fontFamily, theme]);
 
-  if (!ready) return null;
+  const sequenceDurationInFrames = Math.round(durationInFrames / steps.length);
+  console.log('[CodePreview] durationInFrames:', durationInFrames);
 
-  return (
-    <AbsoluteFill
-      style={{
-        background: '#000',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-        height: '100%',
-      }}
-    >
-      <div
+  if (!ready) {
+    return (
+      <Sequence durationInFrames={sequenceDurationInFrames} layout="none">
+        <CodeBlock width={maxBoxSize.width} height={maxBoxSize.height} theme={theme}>
+          {null}
+        </CodeBlock>
+      </Sequence>
+    );
+  }
+
+  return codes.map((code, i) => (
+    <Sequence key={i} from={sequenceDurationInFrames * i} durationInFrames={sequenceDurationInFrames} layout="none">
+      <AbsoluteFill
         style={{
-          width: maxBoxSize.width,
-          height: maxBoxSize.height,
-          position: 'relative',
-          overflow: 'hidden',
+          background: '#000',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100%',
+          height: '100%',
         }}
       >
-        {codes.map((code, i) => (
-          <Sequence key={i} from={STEP_FRAMES * i} durationInFrames={STEP_FRAMES} layout="none">
-            <Code
-              oldCode={i === 0 ? undefined : codes[i - 1]}
-              newCode={code}
-              boxSize={maxBoxSize}
-              theme={theme}
-              fontFamily={fontFamily}
-              fontSize={fontSize}
-            />
-          </Sequence>
-        ))}
-      </div>
-    </AbsoluteFill>
-  );
+        <CodeBlock width={maxBoxSize.width} height={maxBoxSize.height} theme={theme}>
+          <Code
+            oldCode={i === 0 ? undefined : codes[i - 1]}
+            newCode={code}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            durationInFrames={sequenceDurationInFrames}
+          />
+        </CodeBlock>
+      </AbsoluteFill>
+    </Sequence>
+  ));
 });
 
-function Code({ oldCode, newCode, boxSize, theme, fontFamily, fontSize }: CodeProps) {
-  const { code, ref } = useTokenTransitions(oldCode, newCode, STEP_FRAMES);
+interface CodeProps {
+  oldCode: HighlightedCode | undefined;
+  newCode: HighlightedCode;
+  fontFamily: string;
+  fontSize: number;
+  durationInFrames: number;
+}
+
+function Code({ oldCode, newCode, fontFamily, fontSize, durationInFrames }: CodeProps) {
+  const { code, ref } = useTokenTransitions(oldCode, newCode, durationInFrames);
   return (
-    <CodeBlock width={boxSize?.width} height={boxSize?.height} theme={theme}>
-      <Pre
-        ref={ref}
-        code={code}
-        handlers={[mark, tokenTransitions]}
-        style={{
-          fontFamily,
-          fontSize,
-          background: 'transparent',
-          boxShadow: 'none',
-          margin: 0,
-          padding: 0,
-        }}
-      />
-    </CodeBlock>
+    <Pre
+      ref={ref}
+      code={code}
+      handlers={[mark, tokenTransitions]}
+      style={{
+        fontFamily,
+        fontSize,
+        background: 'transparent',
+        boxShadow: 'none',
+        margin: 0,
+        padding: 0,
+      }}
+    />
   );
 }
 

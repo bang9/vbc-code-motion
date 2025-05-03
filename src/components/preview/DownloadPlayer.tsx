@@ -3,8 +3,7 @@ import { CodePreview } from './CodePreview';
 import { RemotionConfig } from '../../stores/remotion-config';
 
 const DEFAULTS: RemotionConfig = {
-  steps: [],
-  fps: 30,
+  fps: 60,
   width: 1280,
   height: 720,
   theme: 'dark-plus',
@@ -12,23 +11,20 @@ const DEFAULTS: RemotionConfig = {
   fontFamily: 'JetBrains Mono',
   fontSize: 16,
   currentStep: 0,
+  totalDurationSec: 2,
 };
 
 registerRoot(() => {
-  // 안전하게 inputProps 파싱
-  const inputProps = { ...DEFAULTS, ...getInputProps() } as RemotionConfig;
+  const inputProps = { ...DEFAULTS, ...getInputProps() } as RemotionConfig & { steps: string[] };
+  const { steps = [], totalDurationSec, fps, width, height, theme, language, fontFamily, fontSize } = inputProps;
 
-  // 필수값 보장
-  const { steps, fps, width, height, theme, language, fontFamily, fontSize } = inputProps;
-
-  // steps가 없거나 비어있으면 최소 1프레임 보장
-  const durationInFrames = Math.max((steps?.length ?? 1) * 60, 60);
+  console.log('[DownloadPlayer] durationInFrames:', Math.round(fps * totalDurationSec));
 
   return (
     <Composition
       id="code-steps"
       component={CodePreview as any}
-      durationInFrames={durationInFrames}
+      durationInFrames={Math.round(fps * totalDurationSec)}
       fps={fps}
       width={width}
       height={height}
@@ -38,6 +34,8 @@ registerRoot(() => {
         language,
         fontFamily,
         fontSize,
+        fps,
+        durationInFrames: Math.round(fps * totalDurationSec),
       }}
     />
   );

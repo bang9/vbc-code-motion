@@ -18,6 +18,7 @@ const RenderSchema = z.object({
   fontSize: z.coerce.number().int().min(1),
   currentStep: z.coerce.number().int().optional(),
   format: z.enum(['video', 'gif', 'webm']).optional(),
+  totalDurationSec: z.coerce.number(),
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -30,12 +31,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log('zod error:', parseResult.error);
       return res.status(400).send('Invalid input');
     }
-    const { fps, width, height, steps, theme, language, fontFamily, fontSize, format = 'video' } = parseResult.data;
+    const {
+      fps,
+      width,
+      height,
+      steps,
+      theme,
+      language,
+      fontFamily,
+      fontSize,
+      format = 'video',
+      totalDurationSec,
+    } = parseResult.data;
 
     const compositionConfigs = { fps, width, height };
-    const codeConfigs = { steps, theme, language, fontFamily, fontSize };
+    const codeConfigs = { fps, steps, theme, language, fontFamily, fontSize, totalDurationSec };
 
-    const entry = path.resolve('./components/preview/DownloadPlayer.tsx');
+    if (format === 'gif') {
+      const limitedFps = Math.max(Math.min(fps, 50), 30);
+      compositionConfigs.fps = limitedFps;
+      codeConfigs.fps = limitedFps;
+      // const actualFrameCounts = fps * totalDurationSec;
+      // codeConfigs.totalDurationSec = actualFrameCounts / limitedFps;
+
+      console.log('[Render] Actual frame counts:', limitedFps);
+      console.log('[Render] Total duration sec:', codeConfigs.totalDurationSec);
+    }
+
+    const entry = path.resolve('./src/components/preview/DownloadPlayer.tsx');
     console.log('[Render] Bundling entry:', entry);
 
     const bundleLocation = await bundle(entry, () => {
