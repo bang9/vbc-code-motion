@@ -104,6 +104,8 @@ export const CodePreview = memo(function CodePreview({
           alignItems: 'center',
           width: '100%',
           height: '100%',
+          borderRadius: 12,
+          overflow: 'hidden',
         }}
       >
         <CodeBlock width={maxBoxSize.width} height={maxBoxSize.height} theme={theme}>

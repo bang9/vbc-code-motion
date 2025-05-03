@@ -27,7 +27,7 @@ export function CodeBlock({ width, height, style, theme, children, ...rest }: Co
   }
 
   return (
-    <div id="code-block" style={{ borderRadius: 16, ...backgroundStyle }}>
+    <div id="code-block" style={backgroundStyle}>
       <div
         style={{
           height: CODE_BLOCK_HEADER_HEIGHT,

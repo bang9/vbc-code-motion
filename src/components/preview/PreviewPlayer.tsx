@@ -132,12 +132,7 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
           fps={config.fps}
           compositionWidth={canvasSize.width}
           compositionHeight={canvasSize.height}
-          style={{
-            width: '100%',
-            height: '100%',
-            borderRadius: 12,
-            overflow: 'hidden',
-          }}
+          style={{ width: '100%', height: '100%' }}
           loop
           autoPlay={false}
           inputProps={{
