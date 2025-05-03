@@ -6,9 +6,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function requestGenerateVideo(config: RemotionConfig) {
+export function requestGenerateVideo(config: RemotionConfig, format?: 'video' | 'gif' | 'webm') {
+  const payload = format ? { ...config, format } : config;
   return fetch('/api/render', {
     method: 'POST',
-    body: JSON.stringify(config),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
   })
 }

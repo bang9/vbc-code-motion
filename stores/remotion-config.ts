@@ -33,14 +33,25 @@ const DEFAULT_CONFIG: RemotionConfig = {
   currentStep: 0,
 };
 
+const toEven = (n: number | undefined) => (typeof n === 'number' ? (n % 2 === 0 ? n : n - 1) : undefined);
+
 export const useRemotionConfig = create<RemotionConfigState>()(
   persist(
     (set) => ({
       config: DEFAULT_CONFIG,
       setConfig: (newConfig) =>
-        set((state) => ({
-          config: { ...state.config, ...newConfig },
-        })),
+        set((state) => {
+          const width = 'width' in newConfig ? toEven(newConfig.width) ?? state.config.width : state.config.width;
+          const height = 'height' in newConfig ? toEven(newConfig.height) ?? state.config.height : state.config.height;
+          return {
+            config: {
+              ...state.config,
+              ...newConfig,
+              width,
+              height,
+            },
+          };
+        }),
       setSteps: (steps) =>
         set((state) => ({
           config: { ...state.config, steps },

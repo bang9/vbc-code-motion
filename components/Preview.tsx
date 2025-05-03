@@ -56,6 +56,13 @@ export default function Preview() {
     return { width: Math.round(maxWidth), height: Math.round(maxHeight) };
   }, [config.steps, config.fontSize, config.fontFamily]);
 
+  // width/height가 바뀔 때 store에도 항상 반영
+  useEffect(() => {
+    if (config.width !== width || config.height !== height) {
+      setConfig({ width, height });
+    }
+  }, [width, height, config.width, config.height, setConfig]);
+
   const handlePlayPause = () => {
     if (playerRef.current) {
       if (isPlaying) {

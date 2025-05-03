@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ModeToggle } from '@/components/mode-toggle';
-import { Play } from 'lucide-react';
+import { Play, Download, Loader2 } from 'lucide-react';
 import { FONT_SIZES, FONTS } from './presets';
 import { BUILTIN_THEMES } from './themes';
 import { useRemotionConfig } from '../stores/remotion-config';
@@ -23,24 +23,32 @@ const LANGUAGES = [
   { value: 'cpp', label: 'C++' },
 ] as const;
 
+const FORMAT_OPTIONS = [
+  { value: 'video', label: 'MP4' },
+  { value: 'gif', label: 'GIF' },
+  { value: 'webm', label: 'WebM' },
+];
+
 export default function Toolbar() {
   const { config, setConfig } = useRemotionConfig();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [format, setFormat] = useState<'video' | 'gif' | 'webm'>('video');
+  const [hovered, setHovered] = useState(false);
 
   const handleSettingChange = <K extends keyof typeof config>(key: K, value: typeof config[K]) => {
     setConfig({ [key]: value });
   };
 
   const handleGenerate = async () => {
+    setIsGenerating(true);
     try {
-      setIsGenerating(true);
-      const res = await requestGenerateVideo(config);
+      const res = await requestGenerateVideo({ ...config }, format);
       if (!res.ok) throw new Error('Render failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `code-steps-${Date.now()}.mp4`;
+      a.download = `code-steps-${Date.now()}.${format === 'gif' ? 'gif' : format === 'webm' ? 'webm' : 'mp4'}`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -96,23 +104,47 @@ export default function Toolbar() {
       </div>
       <div className="flex items-center gap-2 ml-auto">
         <ModeToggle />
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating || config.steps.length === 0}
-          className="gap-2"
-        >
-          {isGenerating ? (
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              <span>Generating...</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Play className="h-4 w-4" />
-              <span>Generate Video</span>
-            </div>
-          )}
-        </Button>
+        <div className="flex items-center relative">
+          <div
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+          >
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating || config.steps.length === 0}
+              className={`flex items-center gap-2 h-10 transition-all duration-200 overflow-hidden rounded-l-md rounded-r-none relative ${hovered ? 'w-32 px-4' : 'w-10 justify-center'} bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/.9)] text-[hsl(var(--primary-foreground))]`}
+              style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, minWidth: hovered ? undefined : 40 }}
+            >
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
+                {isGenerating ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Download className="h-5 w-5" />
+                )}
+              </span>
+              <span
+                className={`ml-8 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'} whitespace-nowrap`}
+              >Generate</span>
+            </Button>
+          </div>
+          <Select
+            value={format}
+            onValueChange={v => setFormat(v as 'video' | 'gif' | 'webm')}
+            disabled={isGenerating}
+          >
+            <SelectTrigger
+              className={`h-10 w-20 rounded-r-md rounded-l-none border-l border-white/10 transition-all duration-200 opacity-100 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/.9)] text-[hsl(var(--primary-foreground))]`}
+              style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FORMAT_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );

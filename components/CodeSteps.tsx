@@ -111,7 +111,7 @@ export const CodeSteps: React.FC<CodeStepsProps> = ({
   return (
     <AbsoluteFill 
       style={{ 
-        background: '#eceff1', 
+        background: '#000',
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
