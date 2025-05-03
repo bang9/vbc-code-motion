@@ -19,7 +19,7 @@ const RenderSchema = z.object({
   currentStep: z.coerce.number().int().optional(),
   format: z.enum(['video', 'gif', 'webm']).optional(),
   totalDurationSec: z.coerce.number(),
-  scale: z.coerce.number().optional().default(1.5),
+  scale: z.coerce.number().optional().default(2),
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

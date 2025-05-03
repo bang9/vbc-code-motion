@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@code-hike/lighter": "latest",
-    "@ffmpeg/ffmpeg": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@monaco-editor/react": "latest",
     "@radix-ui/react-accordion": "1.2.2",
