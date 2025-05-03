@@ -1,7 +1,7 @@
 import type React from 'react';
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/system/ThemeProvider';
+import { SafeThemeProvider } from '@/components/system/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,9 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <SafeThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
-        </ThemeProvider>
+        </SafeThemeProvider>
       </body>
     </html>
   );

@@ -18,12 +18,12 @@ export const ToolBar = memo(function EditorToolbar() {
   );
 
   return (
-    <div className="w-full bg-white flex items-center justify-between py-3 mb-6">
+    <div className="w-full flex items-center justify-between py-3 mb-6">
       <div className="grid grid-cols-4 gap-6 w-full">
         <div className="flex flex-col">
-          <Label className="mb-1 text-xs text-gray-500 font-semibold">Theme</Label>
+          <Label className="mb-1 text-xs text-gray-500 dark:text-gray-300 font-semibold">Theme</Label>
           <Select onValueChange={(v) => handleSettingChange('theme', v as Theme)} value={config.theme as string}>
-            <SelectTrigger className="w-full h-10 rounded-md border border-gray-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/30">
+            <SelectTrigger className="w-full h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium focus:ring-2 focus:ring-primary/30">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -36,9 +36,9 @@ export const ToolBar = memo(function EditorToolbar() {
           </Select>
         </div>
         <div className="flex flex-col">
-          <Label className="mb-1 text-xs text-gray-500 font-semibold">Language</Label>
+          <Label className="mb-1 text-xs text-gray-500 dark:text-gray-300 font-semibold">Language</Label>
           <Select onValueChange={(v) => handleSettingChange('language', v)} value={config.language}>
-            <SelectTrigger className="w-full h-10 rounded-md border border-gray-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/30">
+            <SelectTrigger className="w-full h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium focus:ring-2 focus:ring-primary/30">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -67,9 +67,9 @@ export const ToolBar = memo(function EditorToolbar() {
           </Select>
         </div> */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-xs text-gray-500 font-semibold">Size</Label>
+          <Label className="mb-1 text-xs text-gray-500 dark:text-gray-300 font-semibold">Size</Label>
           <Select onValueChange={(v) => handleSettingChange('fontSize', Number(v))} value={config.fontSize.toString()}>
-            <SelectTrigger className="w-full h-10 rounded-md border border-gray-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/30">
+            <SelectTrigger className="w-full h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium focus:ring-2 focus:ring-primary/30">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
