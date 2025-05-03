@@ -1,11 +1,14 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { Editor as MonacoEditor } from "@monaco-editor/react"
 import { useTheme } from "next-themes"
-import { useStepsStore } from "@/stores/steps-store"
+import { useRemotionConfig } from "@/stores/remotion-config"
 import StepTimeline from "@/components/StepTimeline"
-import { useSettingsStore } from "@/stores/settings-store"
+
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
 const DEFAULT_CODE = `// Welcome to Code Steps Recorder!
 // Separate your steps with --- lines
@@ -31,10 +34,12 @@ function greeting() {
 
 export default function Editor() {
   const { theme } = useTheme()
-  const { setSteps } = useStepsStore()
-  const { editorSettings } = useSettingsStore()
+  const { config, setConfig } = useRemotionConfig()
   const [code, setCode] = useState(DEFAULT_CODE)
+  const [steps, setSteps] = useState(() => DEFAULT_CODE.split('---').map(s => s.trim()))
+  const [isPending, startTransition] = useTransition()
   const editorRef = useRef<any>(null)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor
@@ -43,18 +48,34 @@ export default function Editor() {
   const handleCodeChange = (value: string | undefined) => {
     if (value !== undefined) {
       setCode(value)
-      parseSteps(value)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        startTransition(() => {
+          const newSteps = value.split('---').map(s => s.trim())
+          setSteps(newSteps)
+          setConfig({ steps: newSteps })
+        })
+      }, 300)
     }
   }
 
-  const parseSteps = (code: string) => {
-    const steps = code.split("---").map((step) => step.trim())
-    setSteps(steps)
+  useEffect(() => {
+    // mount 시 초기화
+    const initialSteps = code.split('---').map(s => s.trim())
+    setSteps(initialSteps)
+    setConfig({ steps: initialSteps })
+    // eslint-disable-next-line
+  }, [])
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleCodeChange(e.target.value)
   }
 
-  useEffect(() => {
-    parseSteps(code)
-  }, [])
+  const handleSave = () => {
+    const newSteps = code.split('---').map(s => s.trim())
+    setSteps(newSteps)
+    setConfig({ steps: newSteps })
+  }
 
   return (
     <div className="flex-1 flex gap-4 h-full">
@@ -62,22 +83,26 @@ export default function Editor() {
         <StepTimeline />
       </div>
       <div className="flex-1 border rounded-md overflow-hidden">
-        <MonacoEditor
-          height="100%"
-          language={editorSettings.language}
-          theme={theme === "dark" ? "vs-dark" : "light"}
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium">Code Editor</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSave}
+            disabled={code === config.steps.join("\n---\n")}
+          >
+            Save Changes
+          </Button>
+        </div>
+        <Textarea
           value={code}
-          onChange={handleCodeChange}
-          onMount={handleEditorDidMount}
-          options={{
-            minimap: { enabled: false },
-            fontSize: editorSettings.fontSize,
-            fontFamily: editorSettings.fontFamily,
-            lineNumbers: "on",
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-          }}
+          onChange={handleChange}
+          className="min-h-[400px] font-mono"
+          placeholder="Enter your code here. Separate steps with ---"
         />
+        {isPending && (
+          <div className="text-xs text-muted-foreground mt-2">렌더링 중...</div>
+        )}
       </div>
     </div>
   )

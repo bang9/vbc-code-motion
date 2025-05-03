@@ -13,26 +13,30 @@ import {
   useCurrentFrame,
 } from 'remotion';
 import { AnnotationHandler, highlight, HighlightedCode, InnerLine, InnerPre, InnerToken, Pre } from 'codehike/code';
-import { useSettingsStore } from '../stores/settings-store';
 import {
   calculateTransitions,
   getStartingSnapshot,
   TokenTransition,
   TokenTransitionsSnapshot,
 } from 'codehike/utils/token-transitions';
+import { CodeContainer, CODE_CONTAINER_PADDING } from './CodeContainer';
+import { Theme } from '@code-hike/lighter';
 
-interface CodeStepsProps {
+export interface CodeStepsProps {
   steps: string[];
+  theme?: Theme;
+  language?: string;
+  fontFamily?: string;
+  fontSize?: number;
 }
 
 interface CodeProps {
   oldCode: HighlightedCode | undefined;
   newCode: HighlightedCode;
-}
-
-interface CanvasSize {
-  width: number;
-  height: number;
+  boxSize?: { width: number; height: number };
+  theme: Theme;
+  fontFamily: string;
+  fontSize: number;
 }
 
 const STEP_FRAMES = 60;
@@ -40,38 +44,107 @@ const BACKGROUND_COLOR = '#0D1117';
 const MARK_BACKGROUND_COLOR = '#F2CC6044';
 const MARK_DURATION = 10;
 
-export function CodeSteps({ steps }: CodeStepsProps) {
-  const { editorSettings } = useSettingsStore();
+function getOptimalCanvasSize(
+  code: string,
+  fontSize = 16,
+  fontFamily = 'monospace',
+  padding = CODE_CONTAINER_PADDING
+) {
+  if (typeof window === 'undefined') return { width: 800, height: 450 };
+  const lines = code.split('\n');
+  const maxLineLength = Math.max(...lines.map(line => line.length));
+  const lineCount = lines.length;
+  const ctx = document.createElement('canvas').getContext('2d')!;
+  ctx.font = `${fontSize}px ${fontFamily}`;
+  const charWidth = ctx.measureText('M').width;
+  const contentWidth = charWidth * maxLineLength;
+  const contentHeight = fontSize * 1.7 * lineCount;
+  const width = Math.ceil(contentWidth + padding * 2);
+  const height = Math.ceil(contentHeight + padding * 2);
+  return {
+    width: Math.round(Math.max(400, Math.min(width, 1920))),
+    height: Math.round(Math.max(200, Math.min(height, 1080))),
+  };
+}
+
+export const CodeSteps: React.FC<CodeStepsProps> = ({ 
+  steps = [], 
+  theme = 'dark-plus', 
+  language = 'typescript', 
+  fontFamily = 'monospace', 
+  fontSize = 16 
+}) => {
   const [ready, setReady] = useState(false);
   const [codes, setCodes] = useState<HighlightedCode[]>([]);
+  const [maxBoxSize, setMaxBoxSize] = useState({ width: 800, height: 450 });
 
   useEffect(() => {
     const highlightSteps = async () => {
       const highlighted = await Promise.all(
-        steps.map((v) => highlight({ lang: editorSettings.language, value: v, meta: '' })),
+        steps.map((v) => highlight({ lang: language, value: v, meta: '' }, theme)),
       );
       setCodes(highlighted);
       setReady(true);
+
+      if (typeof window !== 'undefined') {
+        let maxWidth = 0;
+        let maxHeight = 0;
+        for (const code of highlighted) {
+          const { width, height } = getOptimalCanvasSize(
+            code.value,
+            fontSize,
+            fontFamily,
+            CODE_CONTAINER_PADDING
+          );
+          if (width > maxWidth) maxWidth = width;
+          if (height > maxHeight) maxHeight = height;
+        }
+        setMaxBoxSize({ width: maxWidth, height: maxHeight });
+      }
     };
 
     highlightSteps();
-  }, [steps, editorSettings.language]);
+  }, [steps, language, fontSize, fontFamily, theme]);
 
   if (!ready) return null;
 
   return (
-    <AbsoluteFill style={{ background: '#eceff1', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      {codes.map((code, i) => (
-        <Sequence key={i} from={STEP_FRAMES * i} durationInFrames={STEP_FRAMES} layout="none">
-          <Code oldCode={i === 0 ? undefined : codes[i - 1]} newCode={code} />
-        </Sequence>
-      ))}
+    <AbsoluteFill 
+      style={{ 
+        background: '#eceff1', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        width: '100%',
+        height: '100%'
+      }}
+    >
+      <div
+        style={{
+          width: maxBoxSize.width,
+          height: maxBoxSize.height,
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        {codes.map((code, i) => (
+          <Sequence key={i} from={STEP_FRAMES * i} durationInFrames={STEP_FRAMES} layout="none">
+            <Code 
+              oldCode={i === 0 ? undefined : codes[i - 1]} 
+              newCode={code} 
+              boxSize={maxBoxSize} 
+              theme={theme} 
+              fontFamily={fontFamily} 
+              fontSize={fontSize} 
+            />
+          </Sequence>
+        ))}
+      </div>
     </AbsoluteFill>
   );
 }
 
-function Code({ oldCode, newCode }: CodeProps) {
-  const { editorSettings } = useSettingsStore();
+function Code({ oldCode, newCode, boxSize, theme, fontFamily, fontSize }: CodeProps) {
   const { code, ref } = useTokenTransitions(oldCode, newCode, STEP_FRAMES);
   return (
     <div
@@ -83,53 +156,32 @@ function Code({ oldCode, newCode }: CodeProps) {
         height: '100%',
       }}
     >
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #232526 0%, #414345 100%)',
-          borderRadius: 16,
-          boxShadow: '0 4px 32px rgba(0,0,0,0.15)',
-          padding: 32,
-          minWidth: 400,
-          maxWidth: 800,
-          margin: '0 auto',
-          position: 'relative',
-        }}
-      >
-        {/* macOS 스타일 버튼 */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 6, background: '#fc625d', display: 'inline-block' }} />
-          <span style={{ width: 12, height: 12, borderRadius: 6, background: '#fdbc40', display: 'inline-block' }} />
-          <span style={{ width: 12, height: 12, borderRadius: 6, background: '#35cd4b', display: 'inline-block' }} />
-        </div>
+      <CodeContainer width={boxSize?.width} height={boxSize?.height} theme={theme}>
         <Pre
           ref={ref}
           code={code}
           handlers={[mark, tokenTransitions]}
           style={{
-            fontFamily: editorSettings.fontFamily,
-            fontSize: editorSettings.fontSize,
+            fontFamily,
+            fontSize,
             background: 'transparent',
             boxShadow: 'none',
             margin: 0,
             padding: 0,
           }}
-          theme={editorSettings.theme}
         />
-      </div>
+      </CodeContainer>
     </div>
   );
 }
 
 const mark = {
   name: 'mark',
-  Line: (props) => <InnerLine merge={props} style={{ padding: '0 4px' }} />,
+  Line: (props: any) => <InnerLine merge={props} style={{ padding: '0 4px' }} />,
   Block: ({ children, annotation }: any) => {
     const delay = +(annotation.query || 0);
     const frame = useCurrentFrame();
-    const background = interpolateColors(frame, [delay, delay + MARK_DURATION], ['#0000', MARK_BACKGROUND_COLOR], {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    });
+    const background = interpolateColors(frame, [delay, delay + MARK_DURATION], ['#0000', MARK_BACKGROUND_COLOR]);
 
     return <div style={{ background }}>{children}</div>;
   },

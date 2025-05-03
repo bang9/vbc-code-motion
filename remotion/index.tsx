@@ -1,16 +1,25 @@
-import { Composition, registerRoot } from 'remotion';
+import { Composition, registerRoot, getInputProps } from 'remotion';
 import { CodeSteps } from '../components/CodeSteps';
+import { RemotionConfig } from '../stores/remotion-config';
 
-registerRoot(() => (
-  <Composition
-    id="code-steps"
-    component={CodeSteps}
-    durationInFrames={60 * 4}
-    fps={30}
-    width={1280}
-    height={720}
-    defaultProps={{
-      steps: [`function hello() {\n  console.log("hi");\n}`, `function hello() {\n  console.log("hello world");\n}`],
-    }}
-  />
-));
+registerRoot(() => {
+  const inputProps = getInputProps() as unknown as RemotionConfig;
+  
+  return (
+    <Composition
+      id="code-steps"
+      component={CodeSteps as any}
+      durationInFrames={inputProps.steps.length * 60}
+      fps={inputProps.fps}
+      width={inputProps.width}
+      height={inputProps.height}
+      defaultProps={{
+        steps: inputProps.steps,
+        theme: inputProps.theme,
+        language: inputProps.language,
+        fontFamily: inputProps.fontFamily,
+        fontSize: inputProps.fontSize
+      }}
+    />
+  );
+});

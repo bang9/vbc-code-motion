@@ -10,14 +10,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { steps, fps, width, height } = req.body;
+    const compositionConfigs = {
+      fps: req.body.fps,
+      width: req.body.width,
+      height: req.body.height,
+    };
 
-    console.log('[Render] Incoming request with:', {
-      stepsLength: steps?.length,
-      fps,
-      width,
-      height,
-    });
+    const codeConfigs = {
+      steps: req.body.steps,
+      theme: req.body.theme,
+      language: req.body.language,
+      fontFamily: req.body.fontFamily,
+      fontSize: req.body.fontSize,
+    };
 
     const entry = path.resolve('./remotion/index.tsx');
     console.log('[Render] Bundling entry:', entry);
@@ -28,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('[Render] Bundle completed at:', bundleLocation);
 
     const compositions = await getCompositions(bundleLocation, {
-      inputProps: { steps },
+      inputProps: codeConfigs,
     });
 
     const composition = compositions.find((c) => c.id === 'code-steps');
@@ -36,6 +41,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('[Render] Composition not found');
       return res.status(404).send('Composition not found');
     }
+
+    composition.defaultProps = codeConfigs
+    composition.width = compositionConfigs.width;
+    composition.height = compositionConfigs.height;
+    composition.fps = compositionConfigs.fps;
 
     const outputPath = path.join(tmpdir(), `code-steps-${Date.now()}.mp4`);
     console.log('[Render] Output path:', outputPath);
@@ -45,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       serveUrl: bundleLocation,
       codec: 'h264',
       outputLocation: outputPath,
-      inputProps: { steps },
       logLevel: 'verbose',
       onBrowserLog: (log) => {
         console.log('[Render] browser log:', log.text);
