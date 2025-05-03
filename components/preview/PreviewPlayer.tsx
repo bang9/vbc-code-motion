@@ -44,7 +44,7 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
     } else {
       setCanvasSize({ width: 800, height: 450 });
     }
-  }, [currentStep,steps?.[currentStep], config.fontSize, config.fontFamily]);
+  }, [currentStep, steps?.[currentStep], config.fontSize, config.fontFamily]);
 
   // width/height가 바뀔 때 store에도 항상 반영
   useEffect(() => {
