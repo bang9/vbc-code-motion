@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const compositionConfigs = { fps, width, height };
     const codeConfigs = { steps, theme, language, fontFamily, fontSize };
 
-    const entry = path.resolve('./remotion/index.tsx');
+    const entry = path.resolve('./components/preview/DownloadPlayer.tsx');
     console.log('[Render] Bundling entry:', entry);
 
     const bundleLocation = await bundle(entry, () => {

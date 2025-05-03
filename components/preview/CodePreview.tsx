@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import {
   AbsoluteFill,
   continueRender,
@@ -19,8 +19,10 @@ import {
   TokenTransition,
   TokenTransitionsSnapshot,
 } from 'codehike/utils/token-transitions';
-import { CodeContainer, CODE_CONTAINER_PADDING } from './CodeContainer';
+import { CodeBlock } from './CodeBlock';
+import { CODE_CONTAINER_PADDING_BLOCK, CODE_CONTAINER_PADDING_INLINE } from '../../lib/constants';
 import { Theme } from '@code-hike/lighter';
+import { getOptimalCanvasSize } from '../../lib/utils';
 
 export interface CodeStepsProps {
   steps: string[];
@@ -40,49 +42,23 @@ interface CodeProps {
 }
 
 const STEP_FRAMES = 60;
-const BACKGROUND_COLOR = '#0D1117';
 const MARK_BACKGROUND_COLOR = '#F2CC6044';
 const MARK_DURATION = 10;
 
-function getOptimalCanvasSize(
-  code: string,
-  fontSize = 16,
+export const CodePreview = memo(function CodePreview({
+  steps,
+  theme = 'dark-plus',
+  language = 'typescript',
   fontFamily = 'monospace',
-  padding = CODE_CONTAINER_PADDING
-) {
-  if (typeof window === 'undefined') return { width: 800, height: 450 };
-  const lines = code.split('\n');
-  const maxLineLength = Math.max(...lines.map(line => line.length));
-  const lineCount = lines.length;
-  const ctx = document.createElement('canvas').getContext('2d')!;
-  ctx.font = `${fontSize}px ${fontFamily}`;
-  const charWidth = ctx.measureText('M').width;
-  const contentWidth = charWidth * maxLineLength;
-  const contentHeight = fontSize * 1.7 * lineCount;
-  const width = Math.ceil(contentWidth + padding * 2);
-  const height = Math.ceil(contentHeight + padding * 2);
-  return {
-    width: Math.round(Math.max(400, Math.min(width, 1920))),
-    height: Math.round(Math.max(200, Math.min(height, 1080))),
-  };
-}
-
-export const CodeSteps: React.FC<CodeStepsProps> = ({ 
-  steps = [], 
-  theme = 'dark-plus', 
-  language = 'typescript', 
-  fontFamily = 'monospace', 
-  fontSize = 16 
-}) => {
+  fontSize = 16,
+}: CodeStepsProps) {
   const [ready, setReady] = useState(false);
   const [codes, setCodes] = useState<HighlightedCode[]>([]);
   const [maxBoxSize, setMaxBoxSize] = useState({ width: 800, height: 450 });
 
   useEffect(() => {
     const highlightSteps = async () => {
-      const highlighted = await Promise.all(
-        steps.map((v) => highlight({ lang: language, value: v, meta: '' }, theme)),
-      );
+      const highlighted = await Promise.all(steps.map((v) => highlight({ lang: language, value: v, meta: '' }, theme)));
       setCodes(highlighted);
       setReady(true);
 
@@ -94,7 +70,8 @@ export const CodeSteps: React.FC<CodeStepsProps> = ({
             code.value,
             fontSize,
             fontFamily,
-            CODE_CONTAINER_PADDING
+            CODE_CONTAINER_PADDING_INLINE,
+            CODE_CONTAINER_PADDING_BLOCK,
           );
           if (width > maxWidth) maxWidth = width;
           if (height > maxHeight) maxHeight = height;
@@ -109,46 +86,9 @@ export const CodeSteps: React.FC<CodeStepsProps> = ({
   if (!ready) return null;
 
   return (
-    <AbsoluteFill 
-      style={{ 
-        background: '#000',
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        width: '100%',
-        height: '100%'
-      }}
-    >
-      <div
-        style={{
-          width: maxBoxSize.width,
-          height: maxBoxSize.height,
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        {codes.map((code, i) => (
-          <Sequence key={i} from={STEP_FRAMES * i} durationInFrames={STEP_FRAMES} layout="none">
-            <Code 
-              oldCode={i === 0 ? undefined : codes[i - 1]} 
-              newCode={code} 
-              boxSize={maxBoxSize} 
-              theme={theme} 
-              fontFamily={fontFamily} 
-              fontSize={fontSize} 
-            />
-          </Sequence>
-        ))}
-      </div>
-    </AbsoluteFill>
-  );
-}
-
-function Code({ oldCode, newCode, boxSize, theme, fontFamily, fontSize }: CodeProps) {
-  const { code, ref } = useTokenTransitions(oldCode, newCode, STEP_FRAMES);
-  return (
-    <div
+    <AbsoluteFill
       style={{
+        background: '#000',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -156,22 +96,49 @@ function Code({ oldCode, newCode, boxSize, theme, fontFamily, fontSize }: CodePr
         height: '100%',
       }}
     >
-      <CodeContainer width={boxSize?.width} height={boxSize?.height} theme={theme}>
-        <Pre
-          ref={ref}
-          code={code}
-          handlers={[mark, tokenTransitions]}
-          style={{
-            fontFamily,
-            fontSize,
-            background: 'transparent',
-            boxShadow: 'none',
-            margin: 0,
-            padding: 0,
-          }}
-        />
-      </CodeContainer>
-    </div>
+      <div
+        style={{
+          width: maxBoxSize.width,
+          height: maxBoxSize.height,
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {codes.map((code, i) => (
+          <Sequence key={i} from={STEP_FRAMES * i} durationInFrames={STEP_FRAMES} layout="none">
+            <Code
+              oldCode={i === 0 ? undefined : codes[i - 1]}
+              newCode={code}
+              boxSize={maxBoxSize}
+              theme={theme}
+              fontFamily={fontFamily}
+              fontSize={fontSize}
+            />
+          </Sequence>
+        ))}
+      </div>
+    </AbsoluteFill>
+  );
+});
+
+function Code({ oldCode, newCode, boxSize, theme, fontFamily, fontSize }: CodeProps) {
+  const { code, ref } = useTokenTransitions(oldCode, newCode, STEP_FRAMES);
+  return (
+    <CodeBlock width={boxSize?.width} height={boxSize?.height} theme={theme}>
+      <Pre
+        ref={ref}
+        code={code}
+        handlers={[mark, tokenTransitions]}
+        style={{
+          fontFamily,
+          fontSize,
+          background: 'transparent',
+          boxShadow: 'none',
+          margin: 0,
+          padding: 0,
+        }}
+      />
+    </CodeBlock>
   );
 }
 

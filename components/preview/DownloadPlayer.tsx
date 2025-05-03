@@ -1,6 +1,6 @@
 import { Composition, registerRoot, getInputProps } from 'remotion';
-import { CodeSteps } from '../components/CodeSteps';
-import { RemotionConfig } from '../stores/remotion-config';
+import { CodePreview } from './CodePreview';
+import { RemotionConfig } from '../../stores/remotion-config';
 
 const DEFAULTS: RemotionConfig = {
   steps: [],
@@ -19,16 +19,7 @@ registerRoot(() => {
   const inputProps = { ...DEFAULTS, ...getInputProps() } as RemotionConfig;
 
   // 필수값 보장
-  const {
-    steps,
-    fps,
-    width,
-    height,
-    theme,
-    language,
-    fontFamily,
-    fontSize,
-  } = inputProps;
+  const { steps, fps, width, height, theme, language, fontFamily, fontSize } = inputProps;
 
   // steps가 없거나 비어있으면 최소 1프레임 보장
   const durationInFrames = Math.max((steps?.length ?? 1) * 60, 60);
@@ -36,12 +27,11 @@ registerRoot(() => {
   return (
     <Composition
       id="code-steps"
-      component={CodeSteps as any}
+      component={CodePreview as any}
       durationInFrames={durationInFrames}
       fps={fps}
       width={width}
       height={height}
-      transparent
       defaultProps={{
         steps,
         theme,
