@@ -18,8 +18,6 @@ registerRoot(() => {
   const inputProps = { ...DEFAULTS, ...getInputProps() } as RemotionConfig & { steps: string[] };
   const { steps = [], totalDurationSec, fps, width, height, theme, language, fontFamily, fontSize } = inputProps;
 
-  console.log('[DownloadPlayer] durationInFrames:', Math.round(fps * totalDurationSec));
-
   return (
     <Composition
       id="code-steps"

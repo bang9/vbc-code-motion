@@ -7,7 +7,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function requestGenerateVideo(config: RemotionConfig, format?: 'video' | 'gif' | 'webm') {
+interface GenerateVideoConfig extends RemotionConfig {
+  steps: string[];
+}
+
+export function requestGenerateVideo(config: GenerateVideoConfig, format?: 'video' | 'gif' | 'webm') {
   const payload = format ? { ...config, format } : config;
   return fetch('/api/render', {
     method: 'POST',

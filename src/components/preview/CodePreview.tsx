@@ -77,7 +77,6 @@ export const CodePreview = memo(function CodePreview({
   }, [steps, language, fontSize, fontFamily, theme]);
 
   const sequenceDurationInFrames = Math.round(durationInFrames / steps.length);
-  console.log('[CodePreview] durationInFrames:', durationInFrames);
 
   if (!ready) {
     return (

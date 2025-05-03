@@ -41,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fontFamily,
       fontSize,
       format = 'video',
+      scale = 1.5,
       totalDurationSec,
     } = parseResult.data;
 
@@ -123,6 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       onBrowserLog: (log) => {
         console.log('[Render] browser log:', log.text);
       },
+      scale,
     });
 
     const buffer = fs.readFileSync(outputPath);
