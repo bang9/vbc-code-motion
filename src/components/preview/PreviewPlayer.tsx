@@ -138,7 +138,7 @@ export const PreviewPlayer = memo(function PreviewPlayer() {
             borderRadius: 12,
             overflow: 'hidden',
           }}
-          loop={false}
+          loop
           autoPlay={false}
           inputProps={{
             steps: deferredSteps,

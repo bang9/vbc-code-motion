@@ -65,7 +65,6 @@ export const CodeEditor = memo(function CodeEditor() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[minmax(220px,280px)_1fr] gap-6 w-full max-w-6xl mx-auto">
-      {/* Steps Timeline */}
       <div className="min-w-[220px] max-w-[280px] w-full">
         <StepTimeline
           steps={steps}
@@ -76,7 +75,6 @@ export const CodeEditor = memo(function CodeEditor() {
         />
       </div>
 
-      {/* Code Editor */}
       <div className="flex-1 min-w-0">
         <div className={cn('rounded-lg overflow-hidden border', darkMode ? 'border-gray-700' : 'border-gray-200')}>
           <div

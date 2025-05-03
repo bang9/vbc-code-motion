@@ -4,15 +4,12 @@ export const BUILTIN_THEMES = [
   'dracula',
   'github-dark',
   'github-dark-dimmed',
-  //   'github-light',
-  //   'light-plus',
   'material-darker',
   'material-default',
   'material-lighter',
   'material-ocean',
   'material-palenight',
   'min-dark',
-  //   'min-light',
   'monokai',
   'nord',
   'one-dark-pro',
@@ -20,7 +17,6 @@ export const BUILTIN_THEMES = [
   'slack-dark',
   'slack-ochin',
   'solarized-dark',
-  //   'solarized-light',
   'github-from-css',
   'material-from-css',
 ];
@@ -32,15 +28,6 @@ export const FONT_SIZES = [
   { value: 18, label: '18' },
 ];
 
-// export const FONTS = [
-//   { value: "'JetBrains Mono', monospace", label: 'JetBrains Mono', recommended: true },
-//   { value: "'Source Code Pro', monospace", label: 'Source Code Pro' },
-//   { value: "'Fira Code', monospace", label: 'Fira Code' },
-//   { value: "'IBM Plex Mono', monospace", label: 'IBM Plex Mono' },
-//   { value: 'Menlo, monospace', label: 'Menlo' },
-//   { value: 'Consolas, monospace', label: 'Consolas' },
-// ];
-
 export const LANGUAGES = [
   { value: 'javascript', label: 'JavaScript' },
   { value: 'typescript', label: 'TypeScript' },
@@ -50,6 +37,11 @@ export const LANGUAGES = [
   { value: 'rust', label: 'Rust' },
   { value: 'c', label: 'C' },
   { value: 'cpp', label: 'C++' },
+  { value: 'kotlin', label: 'Kotlin' },
+  { value: 'swift', label: 'Swift' },
+  { value: 'ruby', label: 'Ruby' },
+  { value: 'php', label: 'PHP' },
+  { value: 'dart', label: 'Dart' },
 ] as const;
 
 export const FORMAT_OPTIONS = [

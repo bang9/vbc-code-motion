@@ -19,16 +19,15 @@ const RenderSchema = z.object({
   currentStep: z.coerce.number().int().optional(),
   format: z.enum(['video', 'gif', 'webm']).optional(),
   totalDurationSec: z.coerce.number(),
+  scale: z.coerce.number().optional().default(1.5),
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    // zod로 입력값 검증 및 파싱
     const parseResult = RenderSchema.safeParse(req.body);
     if (!parseResult.success) {
-      console.log('zod error:', parseResult.error);
       return res.status(400).send('Invalid input');
     }
     const {
@@ -41,8 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fontFamily,
       fontSize,
       format = 'video',
-      scale = 1.5,
       totalDurationSec,
+      scale,
     } = parseResult.data;
 
     const compositionConfigs = { fps, width, height };
@@ -52,32 +51,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const limitedFps = Math.max(Math.min(fps, 50), 30);
       compositionConfigs.fps = limitedFps;
       codeConfigs.fps = limitedFps;
-      // const actualFrameCounts = fps * totalDurationSec;
-      // codeConfigs.totalDurationSec = actualFrameCounts / limitedFps;
-
-      console.log('[Render] Actual frame counts:', limitedFps);
-      console.log('[Render] Total duration sec:', codeConfigs.totalDurationSec);
     }
 
     const entry = path.resolve('./src/components/preview/DownloadPlayer.tsx');
-    console.log('[Render] Bundling entry:', entry);
-
-    const bundleLocation = await bundle(entry, () => {
-      console.log('[Render] Bundling...');
-    });
-    console.log('[Render] Bundle completed at:', bundleLocation);
-
+    const bundleLocation = await bundle(entry, undefined);
     const compositions = await getCompositions(bundleLocation, {
       inputProps: codeConfigs,
     });
-
     const composition = compositions.find((c) => c.id === 'code-steps');
     if (!composition) {
-      console.error('[Render] Composition not found');
       return res.status(404).send('Composition not found');
     }
 
-    // 포맷별 옵션 팩토리
     const formatOptions = {
       video: {
         codec: 'h264' as const,
@@ -104,7 +89,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const opts = formatOptions[format] ?? formatOptions.video;
 
     const outputPath = path.join(tmpdir(), `code-steps-${Date.now()}.${opts.outputExt}`);
-    console.log('[Render] Output path:', outputPath);
 
     await renderMedia({
       composition: {
@@ -117,13 +101,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       serveUrl: bundleLocation,
       codec: opts.codec,
       outputLocation: outputPath,
-      logLevel: 'verbose',
+      logLevel: 'error',
       inputProps: codeConfigs,
       ...(opts.imageFormat ? { imageFormat: opts.imageFormat } : {}),
       ...(opts.pixelFormat ? { pixelFormat: opts.pixelFormat } : {}),
-      onBrowserLog: (log) => {
-        console.log('[Render] browser log:', log.text);
-      },
       scale,
     });
 
@@ -131,11 +112,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Content-Type', opts.contentType);
     res.setHeader('Content-Disposition', `attachment; filename=code-steps.${opts.outputExt}`);
     res.send(buffer);
-
-    // 임시 파일 삭제
     fs.unlinkSync(outputPath);
   } catch (err: any) {
-    console.error('[Render Error]', err);
     res.status(500).send(err?.message || 'Render failed');
   }
 }
