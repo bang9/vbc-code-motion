@@ -7,6 +7,9 @@ import { tmpdir } from 'os';
 import fs from 'fs';
 import { z } from 'zod';
 
+import { Theme } from '@code-hike/lighter';
+import { HighlightedCode, highlight } from 'codehike/code';
+
 const RenderSchema = z.object({
   steps: z.array(z.string()).min(1),
   fps: z.coerce.number().int().min(1),
@@ -30,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!parseResult.success) {
       return res.status(400).send('Invalid input');
     }
+
     const {
       fps,
       width,
@@ -44,8 +48,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       scale,
     } = parseResult.data;
 
+    const highlightedSteps: HighlightedCode[] = await Promise.all(
+      steps.map((v) => highlight({ lang: language, value: v, meta: '' }, theme as unknown as Theme)),
+    );
+
     const compositionConfigs = { fps, width, height };
-    const codeConfigs = { fps, steps, theme, language, fontFamily, fontSize, totalDurationSec };
+    const codeConfigs = { fps, steps, highlightedSteps, theme, language, fontFamily, fontSize, totalDurationSec };
 
     if (format === 'gif') {
       const limitedFps = Math.max(Math.min(fps, 50), 30);
@@ -86,8 +94,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         contentType: 'video/webm',
       },
     };
-    const opts = formatOptions[format] ?? formatOptions.video;
 
+    const opts = formatOptions[format] ?? formatOptions.video;
     const outputPath = path.join(tmpdir(), `code-steps-${Date.now()}.${opts.outputExt}`);
 
     await renderMedia({
@@ -101,7 +109,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       serveUrl: bundleLocation,
       codec: opts.codec,
       outputLocation: outputPath,
-      logLevel: 'error',
       inputProps: codeConfigs,
       ...(opts.imageFormat ? { imageFormat: opts.imageFormat } : {}),
       ...(opts.pixelFormat ? { pixelFormat: opts.pixelFormat } : {}),
@@ -114,6 +121,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.send(buffer);
     fs.unlinkSync(outputPath);
   } catch (err: any) {
+    console.log('err', err);
     res.status(500).send(err?.message || 'Render failed');
   }
 }

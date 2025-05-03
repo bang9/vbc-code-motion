@@ -35,6 +35,7 @@ export interface CodePreviewsProps {
   language?: string;
   fontFamily?: string;
   fontSize?: number;
+  highlightedSteps?: HighlightedCode[];
 }
 
 export const CodePreview = memo(function CodePreview({
@@ -44,16 +45,21 @@ export const CodePreview = memo(function CodePreview({
   language = 'typescript',
   fontFamily = 'monospace',
   fontSize = 16,
+  highlightedSteps = [],
 }: CodePreviewsProps) {
-  const [ready, setReady] = useState(false);
-  const [codes, setCodes] = useState<HighlightedCode[]>([]);
+  console.log('highlightedSteps', highlightedSteps);
+  const [ready, setReady] = useState(highlightedSteps.length > 0);
+  const [codes, setCodes] = useState<HighlightedCode[]>(highlightedSteps);
   const [maxBoxSize, setMaxBoxSize] = useState({ width: 800, height: 450 });
 
   useLayoutEffect(() => {
-    const highlightSteps = async () => {
-      const highlighted = await Promise.all(steps.map((v) => highlight({ lang: language, value: v, meta: '' }, theme)));
-      setCodes(highlighted);
-      setReady(true);
+    const init = async () => {
+      let highlighted = highlightedSteps;
+      if (highlightedSteps.length === 0) {
+        highlighted = await Promise.all(steps.map((v) => highlight({ lang: language, value: v, meta: '' }, theme)));
+        setCodes(highlighted);
+        setReady(true);
+      }
 
       if (typeof window !== 'undefined') {
         let maxWidth = 0;
@@ -73,7 +79,7 @@ export const CodePreview = memo(function CodePreview({
       }
     };
 
-    highlightSteps();
+    init();
   }, [steps, language, fontSize, fontFamily, theme]);
 
   const sequenceDurationInFrames = Math.round(durationInFrames / steps.length);
